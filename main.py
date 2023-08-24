@@ -1,6 +1,10 @@
 import json
+from dotenv import load_dotenv
 import requests
-import symbl_api from env
+import os
+
+
+load_dotenv()
 
 url = "https://api.symbl.ai/v1/process/audio"
 
@@ -8,28 +12,32 @@ payload = None
 numberOfBytes = 0
 
 try:
-    audio_file = open('destination/of/file/file.wav', 'rb')  # use (r"path/to/file") when using windows path
+    # Assuming the audio file is in the same directory as your script
+    audio_file_path = 'audio\meeting with Tom part 1.mp3'
+    audio_file = open(audio_file_path, 'rb')
     payload = audio_file.read()
     numberOfBytes = len(payload)
 except FileNotFoundError:
-    print("Could not read the file provided.")
+    print(f"Could not read the file provided at {audio_file_path}.")
     exit()
 
+
 # set your access token here. See https://docs.symbl.ai/docs/developer-tools/authentication
-access_token = symbl_api
+access_token = os.getenv("symbl_api")
+
 
 headers = {
     'Authorization': 'Bearer ' + access_token,
     'Content-Length': str(numberOfBytes),  # This should correctly indicate the length of the request body in bytes.
-    'Content-Type': 'audio/wav'
+    'Content-Type': 'audio/mp3'
 }
 
 params = {
   'name': "Shopify Shahar",
-  'languageCode':en-US,
+  'languageCode':'en-US',
   'confidenceThreshold': 0.5,
-  'detectPhrases':true,
-  'enableSpeakerDiarization':true,
+  'detectPhrases':'true',
+  'enableSpeakerDiarization':'true',
   'diarizationSpeakerCount':2
 };
 
@@ -45,6 +53,8 @@ response = requests.request("POST", url, headers=headers, data=payload)
 
 if response.status_code == 201:
     # Successful API execution
+    conversation_id = response.json()['conversationId']  # Save to variable
+    job_id = response.json()['jobId']  # Save to variable
     print("conversationId => " + response.json()['conversationId'])  # ID to be used with Conversation API.
     print("jobId => " + response.json()['jobId'])  # ID to be used with Job API.
 elif response.status_code in responses.keys():
